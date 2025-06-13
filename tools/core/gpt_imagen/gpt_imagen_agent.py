@@ -15,10 +15,11 @@ Usage:
 import os
 import sys
 
+from pathlib import Path
+
 # Add the project root directory to the Python path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(current_dir, '../..'))
-sys.path.append(project_root)
+project_root = Path(__file__).resolve().parent.parent.parent.parent
+sys.path.append(str(project_root))
 
 # Import the FractFlow ToolTemplate
 from FractFlow.tool_template import ToolTemplate

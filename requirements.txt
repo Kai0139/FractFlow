@@ -107,3 +107,8 @@ uvicorn==0.34.0
     #   mcp
 websockets==15.0.1
     # via fractflow (pyproject.toml)
+    
+pyyaml==6.0.2
+loguru==0.7.3
+json-repair==0.46.2
+tokencost==0.1.23
