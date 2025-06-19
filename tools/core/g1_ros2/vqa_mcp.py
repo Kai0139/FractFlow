@@ -31,7 +31,7 @@ class ROSImageComms(Node):
             ROSImage, "/camera/image_raw", self.ros_image_cb, 10
         )
 
-    def ros_image_cb(self, msg) -> np.ndarray:
+    def ros_image_cb(self, msg):
         """Convert a ROS Image message to a numpy array.
         
         Args:
@@ -43,6 +43,22 @@ class ROSImageComms(Node):
         bridge = CvBridge()
         cv_image = bridge.imgmsg_to_cv2(msg)
         self.image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
+
+class ROSPosComms(Node):
+    def __init__(self):
+        super().__init__("ros_pos_comms")
+        self.cv_bridge = CvBridge()
+
+        self.px = None
+        self.py = None
+
+        self.cam_sub = self.create_subscription(
+            Point, "/current_pos", self.ros_image_cb, 10
+        )
+
+    def ros_image_cb(self, msg):
+        self.px = msg.x
+        self.py = msg.y
 
 
 class ROSGotoPos(Node):
@@ -154,7 +170,14 @@ async def Move_to_Position(x, y):
     rclpy.shutdown()
     return True
 
-
+@mcp.tool()
+async def Get_Current_Position():
+    rclpy.init()
+    pos_comms = ROSPosComms()
+    while rclpy.ok() and pos_comms.px is None:
+        rclpy.spin_once(pos_comms)
+    rclpy.shutdown()
+    return str([round(pos_comms.px, 3), round(pos_comms.py, 3)])
 if __name__ == "__main__":
     # Initialize and run the server
     mcp.run(transport='stdio') 

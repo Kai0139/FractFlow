@@ -34,15 +34,23 @@ The camera is mounted at the top of the robot working space, the camera looks do
 The camera pixel coordinate can be converted to working space coordinate by the following formula:
 x = (pixel_x - 480 / 2) / 480 * 10
 y = (480 / 2 - pixel_y) / 480 * 10
+The image bounding box size can be converted to the working space size by the following formula:
+w = (w / 480) * 10
+h = (h / 480) * 10
 
 # Example
 User: move to the black office chair. 
-You should use Visual_Question_Answering to find the position of the black office chair by 
+First, You should use Visual_Question_Answering to find the position of the black office chair by 
 Visual_Question_Answering(prompt="What is the localtion of the black office chair in image? 
 Tell me the exact bounding box in form (cx, cy, w, h), do not return anything else"). 
  Then, you convert the pixel coordinate of the object to the coordinate of the object in the working space. 
-For instance, if the returned bounding box is (360, 240, 100, 100), then the center of the object in working space is (2.5m, 0m),
- you should then call Move_to_Position(x=2.5, y=0) to move the robot to the position of the object.
+For instance, if the returned bounding box is (360, 240, 48, 48), then the center of the object in working space is (2.5m, 0m), the size of the object is (1m, 1m).
+Second, you should call Get_Current_Position() to find the current position of the robot, the returned position is in form [x, y] in meters.
+Then, based on the current position, you should calculate the appropriate position to move to reach the edge of the object bounding box.
+For instance, if the current position is (0m, 0m), the object center position is (2.5m, 0m), 
+and the object size is (0.4m, 1m), then you should move to the position (2.3m, 0m).
+You should calculate the position on the bounding box that is closest to the current robot position.
+Third, you should then call Move_to_Position(x=2.5, y=0) to move the robot to the position of the object.
 
 # Available tool 1
 Visual_Question_Answering - This tool will answer the question about image in the camera, you don't need to provide the image.
@@ -60,6 +68,12 @@ Move_to_Position Tool usage
 1. After you get the position of the object using Visual_Question_Answering tool, 
 you can use the Motion_Control tool to move the robot to the position of the object.
 2. Be aware that you need to convert the position from the image coordinate to the working space coordinate.
+
+# Available tool 3
+Get_Current_Position - This tool will return the current position of the robot.
+
+Get_Current_Position Tool usage
+1. Before you move to the position of the object, you can use the Get_Current_Position tool to get the current position of the robot.
 """
     
     TOOLS = [
@@ -85,6 +99,14 @@ you can use the Motion_Control tool to move the robot to the position of the obj
         position (str): "[x, y]" Text of a list containing the x and y coordinates of the position.
     Returns:
         bool - True if the robot moves to the position successfully, False otherwise.
+
+    Get_Current_Position:
+    This tool returns the current position of the robot.
+    
+    Parameters:
+        None
+    Returns:
+        list - Current position of the robot in form [x, y]
     """
     
     @classmethod
@@ -97,7 +119,7 @@ you can use the Motion_Control tool to move the robot to the position of the obj
         return ConfigManager(
             provider='deepseek',
             deepseek_model='deepseek-chat',
-            max_iterations=2,  # Visual analysis usually completes in one iteration
+            max_iterations=8,  # Visual analysis usually completes in one iteration
             custom_system_prompt=cls.SYSTEM_PROMPT,
             tool_calling_version='turbo'
         )
