@@ -68,12 +68,19 @@ class ROSGotoPos(Node):
         super().__init__("ros_goto_pos")
         self.target_pos = None
         self.target_pos_pub = self.create_publisher(Point, "/goto_pos", 10)
+        self.target_pos_sub = self.create_subscription(
+            Point, "/current_pos", self.ros_pos_cb, 10
+        )
+
+    def ros_pos_cb(self, msg):
+        self.target_pos = (msg.x, msg.y)
 
     def publish_target(self, x, y):
         msg = Point()
         msg.x = x
         msg.y = y
         self.target_pos_pub.publish(msg)
+        time.sleep(0.1)
 
 def encode_image(image: Image.Image, size: tuple[int, int] = (512, 512)) -> str:
     image.thumbnail(size)
@@ -168,8 +175,10 @@ async def Move_to_Position(x, y):
     rclpy.init()
     pos_pub = ROSGotoPos()
     time.sleep(0.1)
+    pos_pub.target_pos = None
     pos_pub.publish_target(float(x), float(y))
-    time.sleep(0.1)
+    while rclpy.ok() and pos_pub.target_pos is None:
+        rclpy.spin_once(pos_pub, timeout_sec=3)
     # pos_pub.destroy_node()
     rclpy.shutdown()
     return True
