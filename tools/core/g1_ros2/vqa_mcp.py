@@ -3,6 +3,8 @@ import os
 from mcp.server.fastmcp import FastMCP
 from openai import OpenAI
 from dotenv import load_dotenv
+import rclpy.duration
+import rclpy.time
 load_dotenv()
 # Initialize FastMCP server
 mcp = FastMCP("Visual_Question_Answering")
@@ -10,7 +12,7 @@ mcp = FastMCP("Visual_Question_Answering")
 from PIL import Image
 import base64
 import io
-
+import time
 import numpy as np
 import cv2
 import rclpy
@@ -165,8 +167,10 @@ async def Move_to_Position(x, y):
     '''
     rclpy.init()
     pos_pub = ROSGotoPos()
+    time.sleep(0.1)
     pos_pub.publish_target(float(x), float(y))
-    pos_pub.destroy_node()
+    time.sleep(0.1)
+    # pos_pub.destroy_node()
     rclpy.shutdown()
     return True
 
